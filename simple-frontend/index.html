@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Dental Appointment Booking</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div x-data="chatbotApp()" class="max-w-4xl mx-auto p-4">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b rounded-t-xl">
+            <div class="flex justify-between items-center h-16 px-6">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"></path>
+                        </svg>
+                    </div>
+                    <h1 class="ml-2 text-xl font-bold text-gray-900">AI Dental Assistant</h1>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                    <span class="text-blue-100 text-sm">Online</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Chat Container -->
+        <div class="bg-white rounded-b-xl shadow-lg">
+            <!-- Chat Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 rounded-t-xl">
+                <h2 class="text-xl font-semibold text-white">How can I help you today?</h2>
+                <p class="text-blue-100 text-sm mt-1">I can help you book, reschedule, or cancel appointments</p>
+            </div>
+
+            <!-- Chat Messages -->
+            <div class="h-96 overflow-y-auto p-6 space-y-4" x-ref="messagesContainer">
+                <template x-if="messages.length === 0">
+                    <div class="text-center py-8">
+                        <div class="w-12 h-12 text-gray-400 mx-auto mb-4">
+                            <svg fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Welcome to AI Dental Assistant</h3>
+                        <p class="text-gray-600 mb-6">I'm here to help you with your dental appointments. What would you like to do?</p>
+
+                        <!-- Quick Actions -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-md mx-auto">
+                            <button @click="sendQuickMessage('I want to book an appointment')"
+                                    class="flex items-center space-x-2 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-left">
+                                <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <span class="text-sm text-blue-900">Book Appointment</span>
+                            </button>
+
+                            <button @click="sendQuickMessage('Check my appointments')"
+                                    class="flex items-center space-x-2 p-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-left">
+                                <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-sm text-green-900">My Appointments</span>
+                            </button>
+
+                            <button @click="sendQuickMessage('Reschedule appointment')"
+                                    class="flex items-center space-x-2 p-3 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors text-left">
+                                <svg class="h-5 w-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-sm text-yellow-900">Reschedule</span>
+                            </button>
+
+                            <button @click="sendQuickMessage('Cancel appointment')"
+                                    class="flex items-center space-x-2 p-3 bg-red-50 hover:bg-red-100 rounded-lg transition-colors text-left">
+                                <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-sm text-red-900">Cancel</span>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+
+                <template x-for="message in messages" :key="message.id">
+                    <div class="flex" :class="message.type === 'user' ? 'justify-end' : 'justify-start'">
+                        <div class="flex max-w-xs lg:max-w-md" :class="message.type === 'user' ? 'flex-row-reverse' : 'flex-row'">
+                            <!-- Avatar -->
+                            <div class="flex-shrink-0" :class="message.type === 'user' ? 'ml-3' : 'mr-3'">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center"
+                                     :class="message.type === 'user' ? 'bg-blue-600' : 'bg-green-600'">
+                                    <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <path x-show="message.type === 'user'" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"></path>
+                                        <path x-show="message.type !== 'user'" d="M2 5a2 2 0 012-2h7a2 2 0 012 2v4a2 2 0 01-2 2H9l-3 3v-3H4a2 2 0 01-2-2V5z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- Message Content -->
+                            <div class="flex flex-col" :class="message.type === 'user' ? 'items-end' : 'items-start'">
+                                <div class="px-4 py-2 rounded-lg"
+                                     :class="message.type === 'user' ? 'bg-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'">
+                                    <p class="text-sm whitespace-pre-wrap" x-text="message.content"></p>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1" :class="message.type === 'user' ? 'text-right' : 'text-left'"
+                                     x-text="new Date(message.timestamp).toLocaleTimeString()"></div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <template x-if="isTyping">
+                    <div class="flex items-center space-x-2 text-gray-500">
+                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                        <span class="text-sm">AI is typing...</span>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="border-t bg-gray-50 px-6 py-4 rounded-b-xl">
+                <form @submit.prevent="sendMessage" class="flex space-x-4">
+                    <div class="flex-1">
+                        <input type="text" x-model="inputMessage" placeholder="Type your message here..."
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               :disabled="isLoading">
+                    </div>
+                    <button type="submit" :disabled="!inputMessage.trim() || isLoading"
+                            class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                        </svg>
+                        <span>Send</span>
+                    </button>
+                </form>
+                <div class="mt-2 text-xs text-gray-500">Press Enter to send, Shift+Enter for new line</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function chatbotApp() {
+            return {
+                messages: [],
+                inputMessage: '',
+                isLoading: false,
+                isTyping: false,
+                sessionToken: null,
+
+                async init() {
+                    await this.startSession();
+                },
+
+                async startSession() {
+                    try {
+                        // Generate a session ID for this conversation
+                        this.sessionToken = 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                        this.addMessage('assistant', "Hello! I'm your AI dental assistant. How can I help you today?");
+                    } catch (error) {
+                        console.error('Failed to start session:', error);
+                        this.addMessage('system', "Sorry, I'm having trouble connecting. Please refresh the page and try again.");
+                    }
+                },
+
+                async sendMessage() {
+                    if (!this.inputMessage.trim() || this.isLoading) return;
+
+                    const message = this.inputMessage.trim();
+                    this.inputMessage = '';
+                    this.addMessage('user', message);
+                    this.isTyping = true;
+
+                    try {
+                        const response = await fetch('http://localhost:5001/chat', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                message: message,
+                                sessionId: this.sessionToken,
+                                user_id: null,
+                                language: 'en'
+                            })
+                        });
+
+                        const data = await response.json();
+                        if (data.response) {
+                            this.addMessage('assistant', data.response);
+                        } else {
+                            this.addMessage('system', "I'm sorry, I'm having trouble processing your request. Please try again.");
+                        }
+                    } catch (error) {
+                        console.error('Error sending message:', error);
+                        this.addMessage('system', "I'm sorry, I'm having trouble processing your request. Please try again.");
+                    } finally {
+                        this.isTyping = false;
+                    }
+                },
+
+                sendQuickMessage(message) {
+                    this.inputMessage = message;
+                    this.sendMessage();
+                },
+
+                addMessage(type, content) {
+                    this.messages.push({
+                        id: Date.now() + Math.random(),
+                        type: type,
+                        content: content,
+                        timestamp: new Date().toISOString()
+                    });
+
+                    this.$nextTick(() => {
+                        this.$refs.messagesContainer.scrollTop = this.$refs.messagesContainer.scrollHeight;
+                    });
+                }
+            }
+        }
+    </script>
+</body>
+</html>
